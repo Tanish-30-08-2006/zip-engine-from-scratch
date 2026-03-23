@@ -66,7 +66,10 @@ def main():
 
     # If the entropy is 2 bits, but we use 8 bits (standard ASCII), 
     # we are wasting 6 bits per character!
+    potential_total_bits = actual_entropy * total_chars
     potential_size = (actual_entropy * total_chars) / 8
+
+    print(f"Theoretical Compressed Size in bits: {potential_total_bits:.2f} bits")
     print(f"Theoretical Compressed Size: {potential_size:.2f} bytes")
     print(f"Possible Compression: {(1 - (potential_size/total_chars)):.2%}")
 
