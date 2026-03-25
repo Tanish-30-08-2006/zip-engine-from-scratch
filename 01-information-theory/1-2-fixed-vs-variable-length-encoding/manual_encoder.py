@@ -65,21 +65,48 @@ def run_automatic_encoder():
     
     for char in file_content:
         encoded_stream = encoded_stream + custom_dictionary[char]
-    
 
-    #----------------------------------COMPARISON-----------------------------------#
+    
+    #------------------------DECODING ENCODED BIT CONTENT------------------------------------#
+
+    # while decoding we need to lookup bits to find corresponding characters so flip the dictionary
+    flipped_dict    = {bit_code: char for char , bit_code in custom_dictionary.items()}
+
+    decoded_output = ""
+    current_bits = "" # This is our "Accumulator" (memory)
+
+    for bit in encoded_stream:
+        current_bits = current_bits + bit
+
+        if current_bits in flipped_dict:
+            decoded_output = decoded_output + flipped_dict[current_bits]
+            current_bits = ""
+
+
+    #----------------------------------COMPARISON AND VERIFICATION-----------------------------------#
 
     ascii_size        = (total_chars)*(8)
     compressed_size   = len(encoded_stream)
     size_saved        = (1 - (compressed_size / ascii_size)) * 100
 
+    print("-" * 50)
+    print(f"Original Text:  {file_content[:30]}   ") 
+    print(f"Decoded Text:   {decoded_output[:30]}   ")
+
+    if file_content == decoded_output:
+        print("VERIFICATION: SUCCESS! (Data is Lossless)")
+    else:
+        print("VERIFICATION: FAILED! (Data was corrupted)")
+
     print("\n The Resulting Bit-Stream:")
     print(f"Binary: {encoded_stream}") 
     
-    print("\n[Step 3] Final Efficiency Audit:")
+    print("\n Final Efficiency Audit:")
     print(f"Original Size (ASCII 8-bit): {ascii_size} bits")
     print(f"New Compressed Size:         {compressed_size} bits")
     print(f"Space Saved:                 {size_saved:.2f}%")
+
+
 
 if __name__ == "__main__":
     run_automatic_encoder()
