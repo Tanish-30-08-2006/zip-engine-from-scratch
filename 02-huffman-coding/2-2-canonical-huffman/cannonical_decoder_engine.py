@@ -1,4 +1,7 @@
-# -*- coding: utf-8 -*-
+
+
+# The Decoder: Reads Header String --> Calculates Codes --> Decodes Bits.
+
 import heapq
 import collections
 import os
@@ -112,6 +115,27 @@ def generate_canonical_codes(lengths_dict):
 # PART 4: THE LAB EXECUTION
 # -------------------------------------------------------------------------
 
+
+def create_zip_header_string(lengths_dict):
+    """
+    Sort by Bit-Length (Primary) then Alphabet (Secondary).
+    This is the professional standard for Canonical Huffman.
+    """
+    #  We turn the dictionary into a list of tuples: [('A', 2), ('B', 2)...]
+    items = list(lengths_dict.items())
+    
+    #  THE CRITICAL SORT: 
+    # Sort by the length (x[1]) first. 
+    # If lengths are equal, sort by the character (x[0]).
+    sorted_for_header = sorted(items, key=lambda x: (x[1], x[0]))
+    
+    header_parts = []
+    for char, length in sorted_for_header:
+        display_char = char if char != " " else "_" # Space as underscore
+        header_parts.append(f"{display_char}{length}")
+    
+    return "".join(header_parts)
+
 def run_canonical_lab():
     print("\n" + "="*50)
     print("   PHASE 2.2: THE CANONICAL HUFFMAN ENGINE   ")
@@ -132,35 +156,36 @@ def run_canonical_lab():
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 
-    # --- EXECUTION FLOW ---
+    # ----------------- EXECUTION FLOW --------------------#
 
-    # 1. Get the Bit-Lengths using a standard tree
+    #  Get the Bit-Lengths using a standard tree
+
     print("\n[Step 1] Analyzing Information Density...")
     root = build_standard_tree(content)
     lengths_dict = {}
     get_bit_lengths(root, 0, lengths_dict)
 
-    # 2. Convert those lengths into a Canonical Map
-    # This is the map that can be reconstructed with NO tree data!
+    # Convert those lengths into a Canonical Map
+    # This is the map that can be reconstructed with NO tree data
+
     print("[Step 2] Transforming to Canonical Form...")
     canonical_dict = generate_canonical_codes(lengths_dict)
 
-    # 3. Display the results for GitHub Insights
-    print("\n[Step 3] Canonical Header Result:")
+    #-----------------DISPLAY RESULTS----------------#
+
+    print("\n[Step 3] Creating the Portable File Header...")
+    header_string = create_zip_header_string(lengths_dict)
+    
+    print("-" * 55)
+    print(f"RAW HEADER STRING: {header_string}")
     print("-" * 55)
     print(f"{'Character':<12} | {'Bit-Length':<12} | {'Canonical Code'}")
     print("-" * 55)
 
-    # Sort alphabetially for the final display
     for char in sorted(canonical_dict.keys()):
         display_char = f"'{char}'" if char != " " else "Space"
         code = canonical_dict[char]
         print(f"{display_char:<12} | {len(code):<12} | {code}")
-
-    print("-" * 55)
-    print("\nSUMMARY: To decode this, a ZIP file ONLY needs to save")
-    print("the 'Bit-Length' column. The tree structure is now math!")
-    print("="*50 + "\n")
 
 if __name__ == "__main__":
     run_canonical_lab()
