@@ -1,4 +1,7 @@
-# -*- coding: utf-8 -*-
+# The Encoder: Uses Frequency --> Tree --> Lengths --> Header String.   
+# The File: Saves the Header String + Encoded Bits.
+# The Decoder: Reads Header String --> Calculates Codes --> Decodes Bits.
+
 import heapq
 import os
 import collections
