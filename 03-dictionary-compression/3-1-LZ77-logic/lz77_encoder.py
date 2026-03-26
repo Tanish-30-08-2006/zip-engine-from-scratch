@@ -1,13 +1,10 @@
-
-
 # LZ77 DATA COMPRESSION TECHNIQUE IS SAME AS LZ1 DATA COMPRESSION TECHNIQUE 
-# LZ77 / LZ1 / SLIDING WINDOW  --> DYNAMIC (ADAPTIVE) DICTIONARY TECHNIQUE
+# LZ77 / LZ1 / SLIDING WINDOW --> DYNAMIC (ADAPTIVE) DICTIONARY TECHNIQUE
 
 '''
 look ahead buffer size + search buffer size = window size 
 search buffer -->(past) a fixed size window of characters algorithm has already processed
 look ahead buffer --> (future) a fixed size window of characters waiting to be encoded
-
 '''
 
 import os
@@ -26,32 +23,28 @@ def lz77_encode(text, window_size=20):
         # 1. DEFINE THE SEARCH BUFFER (THE PAST)
         # We look back 'window_size' steps, but not before the start of the file
         search_start = max(0, cursor - window_size)
-        search_buffer = text[search_start : cursor]
         
         # 2. DEFINE THE LOOK-AHEAD (THE FUTURE)
-        # What are we trying to find a match for?
-        look_ahead = text[cursor:]
+        # (The look-ahead starts at text[cursor:])
 
-        # 3. SEARCH FOR THE LONGEST MATCH
-        # We try to find the longest part of 'look_ahead' inside 'search_buffer'
-        for length in range(1, len(look_ahead)):
-            substring = look_ahead[:length]
+        # 3. SEARCH FOR THE LONGEST MATCH (Including overlap)
+        # We try to find the longest part of the look-ahead inside the search buffer area
+        for start_pos in range(search_start, cursor):
+            current_match_length = 0
             
-            # Find the last (most recent) occurrence of this substring in the past
-            # rfind returns the index of the match
-            match_index = search_buffer.rfind(substring)
+            # Compare char by char from this start_pos
+            # This allows the match to extend past 'cursor' (overlap)
+            while (cursor + current_match_length < len(text) and 
+                   text[start_pos + current_match_length] == text[cursor + current_match_length]):
+                current_match_length += 1
             
-            if match_index != -1:
-                # We found a match! Calculate how far back it is.
-                # Distance = (Length of search buffer) - (Index where match started)
-                best_match_distance = len(search_buffer) - match_index
-                best_match_length = length
-            else:
-                # No longer match found, stop searching for this cursor position
-                break
-
+            # If this is the longest match we've seen so far, save it
+            if current_match_length >= best_match_length:
+                best_match_distance = cursor - start_pos
+                best_match_length = current_match_length
+        
         # 4. CREATE THE TUPLE (Pointer)
-        # Move the cursor forward by (length of match + 1 for the new char)
+        # Move the cursor forward by the length of the match
         cursor += best_match_length
         
         # If we reached the absolute end, there is no 'next_char'
@@ -63,7 +56,7 @@ def lz77_encode(text, window_size=20):
         # Store the (Distance, Length, Character)
         compressed_data.append((best_match_distance, best_match_length, next_char))
         
-        # Move cursor to the next starting point
+        # Move cursor to the next character (the one after the pointer)
         cursor += 1
 
     return compressed_data
@@ -75,7 +68,7 @@ def run_lz77_lab():
 
     # Path Setup 
     base_dir = os.path.dirname(__file__)
-    file_name = input("Enter file name (e.g., repetitive.txt): ")
+    file_name = input("Enter file name (e.g., lz77_test.txt): ")
 
     file_path = os.path.join(base_dir, "..", "data", file_name)
 
@@ -111,4 +104,3 @@ def run_lz77_lab():
 
 if __name__ == "__main__":
     run_lz77_lab()
-
