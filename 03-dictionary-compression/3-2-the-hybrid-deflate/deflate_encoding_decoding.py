@@ -116,3 +116,106 @@ def deflate_decoder_lab(lit_len_stream, dist_stream):
     print("-"*30)
     print(f"{'Symbol':<15} | {'Logic Applied':<30} | {'Current Output'}")
 
+    for sym in lit_len_stream:
+        if sym == "END_OF_FILE":
+            print(f"{sym:<15} | Stop Decoding                | [FINISH]")
+            break
+            
+        if str(sym).startswith("L_"):
+            # It's a Length! We must also pull a Distance.
+            length = int(sym.split("_")[1])
+            dist_sym = dist_stream[dist_ptr]
+            distance = int(dist_sym.split("_")[1])
+            dist_ptr += 1
+            
+            # Jump back 'distance' and copy 'length'
+            back_index = len(rebuilt) - distance
+            copied_chunk = ""
+            for i in range(length):
+                char = rebuilt[back_index + i]
+                copied_chunk += char
+                rebuilt += char
+            
+            print(f"{sym + ' ' + dist_sym:<15} | Jump -{distance}, Copy {length} ('{copied_chunk}') | {rebuilt[-15:]}")
+        
+        else:
+            # It's just a normal character
+            rebuilt += sym
+            display_sym = f"'{sym}'" if sym != " " else "Space"
+            print(f"{display_sym:<15} | Write Literal char          | {rebuilt[-15:]}")
+            
+    return rebuilt
+
+
+# -------------------------------------------------------------------------
+# PART 4: THE INFORMATION AUDIT (THE "PRO" LAB)
+# -------------------------------------------------------------------------
+
+def run_deflate_pro_lab():
+    print("\n" + "-"*70)
+    print("         DEFLATE HYBRID ENGINE: THE ULTIMATE VISUALIZER         ")
+    print("-"*70)
+
+    # 1. INPUT DATA
+    base_dir = os.path.dirname(__file__)
+    file_name = input("\nEnter file name from /data (e.g., repetitive.txt): ")
+    file_path = os.path.join(base_dir, "..","data", file_name)
+
+    if not os.path.exists(file_path):
+        print("Error: File not found.")
+        return
+
+    with open(file_path, 'r', encoding='utf-8') as f:
+        original_text = f.read()
+
+    # 2. ENCODING PHASE
+    lit_len_stream, dist_stream = deflate_encoder_lab(original_text)
+
+    # 3. PROBABILITY & HUFFMAN PHASE
+    print("\n" + "-"*100)
+    print("STEP 2: HUFFMAN PROBABILITY ANALYSIS")
+    print("-"*100)
+    
+    # Analyze frequency of symbols in both streams
+    freq_lits = collections.Counter(lit_len_stream)
+    freq_dists = collections.Counter(dist_stream)
+    
+    # Build TWO Trees (The Pro ZIP way)
+    root_lits = build_huffman_tree(freq_lits, "Literal/Length")
+    root_dists = build_huffman_tree(freq_dists, "Distance")
+    
+    # Generate bit-codes
+    codes_lits, codes_dists = {}, {}
+    generate_codes(root_lits, "", codes_lits)
+    generate_codes(root_dists, "", codes_dists)
+
+    # 4. DECODING PHASE
+    rebuilt_text = deflate_decoder_lab(lit_len_stream, dist_stream)
+
+    # 5. FINAL REPORT (The "Why it worked" section)
+    print("\n" + "-"*100)
+    print("                     FINAL EFFICIENCY REPORT                     ")
+    print("-"*100)
+    
+    # Calculate total bits used
+    total_bits = 0
+    for s in lit_len_stream: total_bits += len(codes_lits[s])
+    for d in dist_stream: total_bits += len(codes_dists[d])
+    
+    orig_bits = len(original_text) * 8
+    
+    print(f"1. Original Text Length:     {len(original_text)} chars ({orig_bits} bits)")
+    print(f"2. LZ77 Symbols Created:     {len(lit_len_stream)} symbols")
+    print(f"3. Huffman compressed size:  {total_bits} bits")
+    print(f"4. TOTAL SPACE SAVED:        {((orig_bits - total_bits) / orig_bits) * 100:.2f}%")
+    print("-" * 100)
+    
+    if original_text == rebuilt_text:
+        print("   VERIFICATION: DATA IS 100% IDENTICAL. LOSSLESS SUCCESS.")
+    else:
+        print("   ERROR: Data mismatch detected.")
+    
+    print("-"*100 + "\n")
+
+if __name__ == "__main__":
+    run_deflate_pro_lab() # Running the lab logic
