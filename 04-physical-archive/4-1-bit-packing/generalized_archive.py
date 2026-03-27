@@ -158,3 +158,45 @@ def main_compression_factory():
     print(f"    - Embedding Filename: '{file_name}'")
     final_archive.append(len(file_name))
     for char in file_name:
+        final_archive.append(ord(char))
+
+    # The Map (Crucial for Generalization)
+    print(f"    - Packing Huffman Map ({len(bit_lengths)} entries)...")
+    final_archive.append(len(bit_lengths)) # Number of symbols
+    for sym, length in bit_lengths.items():
+        # This is a simple way to store the map for this lab
+        # Real ZIPs use more complex binary headers
+        sym_str = str(sym)
+        final_archive.append(len(sym_str)) # How long is the symbol name?
+        for c in sym_str: final_archive.append(ord(c))
+        final_archive.append(length) # How many bits is its code?
+
+    # --- THE PAYLOAD ---
+    print("    - Converting Symbols to Bitstream...")
+    full_bitstream = "".join([huffman_codes[s] for s in symbol_stream])
+    
+    print(f"    - Packing {len(full_bitstream)} bits into 8-bit Bytes...")
+    compressed_bytes = packer.push_bits(full_bitstream)
+    packed_data = packer.flush()
+    final_archive.extend(packed_data)
+
+    # 5. FINAL REPORT
+    print("\n" + "--"*80)
+    print("                     COMPRESSION SUMMARY REPORT                     ")
+    print("--"*80)
+    print(f"Original Size:   {start_size} Bytes")
+    print(f"Archive Size:    {len(final_archive)} Bytes")
+    print(f"Space Saved:     {((start_size - len(final_archive)) / start_size) * 100:.2f}%")
+    print(f"HEX Preview:     {final_archive[:16].hex(' ').upper()} ...")
+    
+    output_path = file_name.split('.')[0] + ".bin"
+    with open(output_path, "wb") as f:
+        f.write(final_archive)
+    
+    print(f"\n SUCCESS: '{output_path}' created in the current directory.")
+    print("This file contains the Signature, the Filename, the Map, and the Bits.")
+    print("--"*80 + "\n")
+
+if __name__ == "__main__":
+    main_compression_factory()
+
