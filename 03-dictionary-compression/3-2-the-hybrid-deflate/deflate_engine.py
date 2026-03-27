@@ -148,9 +148,9 @@ def run_deflate_lab():
     
     print("\n[Educational Insight]:")
     if stats['reduction'] > 50:
-        print("💡 EXCELLENT: This file has high redundancy. LZ77 did the heavy lifting!")
+        print(" Note: This file has high redundancy. LZ77 did the heavy lifting!")
     else:
-        print("💡 NOTE: Low redundancy. Huffman will need to work harder on individual bits.")
+        print(" Note: Low redundancy. Huffman will need to work harder on individual bits.")
     
     print("\nNEXT STEP: We will now turn these symbols into a Huffman Tree.")
     print("A 'MATCH' symbol will take the same 'space' as a single character 'A'.")
