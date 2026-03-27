@@ -123,3 +123,38 @@ def main_compression_factory():
         return
 
     with open(file_path, 'r', encoding='utf-8') as f:
+        original_text = f.read()
+
+    start_size = len(original_text)
+    print(f"\n[1] INPUT LOADED: '{file_name}' ({start_size} characters)")
+
+    # 2. RUN LZ77 (Pattern Substitution)
+    symbol_stream = lz77_process(original_text)
+    print(f"    - Pattern Finding Complete. Resulted in {len(symbol_stream)} Symbols.")
+
+    # 3. BUILD HUFFMAN MAP (The Bit-Instructions)
+    print("\n[2] BUILDING HUFFMAN DICTIONARY...")
+    freqs = collections.Counter(symbol_stream)
+    root = build_huffman_tree(freqs)
+    huffman_codes = {}
+    generate_codes(root, "", huffman_codes)
+    
+    # Store Bit-Lengths for the Header (Canonical Style)
+    bit_lengths = {sym: len(code) for sym, code in huffman_codes.items()}
+    print(f"    - Dictionary Built. Unique Symbols: {len(huffman_codes)}")
+
+    # 4. PHYSICAL ASSEMBLY (Writing to Binary)
+    print("\n[3] ASSEMBLING PHYSICAL ARCHIVE (HEX & BIT PACKING)...")
+    packer = BitPacker()
+    final_archive = bytearray()
+
+    # --- THE HEADER ---
+    # Signature 'PK'
+    print("    - Writing Magic Signature: 0x50 0x4B (P K)")
+    final_archive.append(ord('P'))
+    final_archive.append(ord('K'))
+
+    # Filename
+    print(f"    - Embedding Filename: '{file_name}'")
+    final_archive.append(len(file_name))
+    for char in file_name:
