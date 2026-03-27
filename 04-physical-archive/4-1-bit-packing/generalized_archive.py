@@ -83,3 +83,43 @@ class BitPacker:
     def __init__(self):
         self.output = bytearray()
         self.current_byte = 0
+        self.bits_filled = 0
+
+    def push_bits(self, bit_string):
+        """ Pour Huffman bits into the bucket """
+        for bit in bit_string:
+            self.current_byte = (self.current_byte << 1) | int(bit)
+            self.bits_filled += 1
+            if self.bits_filled == 8:
+                self.output.append(self.current_byte)
+                self.current_byte = 0
+                self.bits_filled = 0
+
+    def flush(self):
+        """ Pads the final byte with zeros if it's not full """
+        if self.bits_filled > 0:
+            self.current_byte <<= (8 - self.bits_filled)
+            self.output.append(self.current_byte)
+        return self.output
+
+
+# =========================================================================
+# THE GRAND GENERALIZED EXECUTION
+# =========================================================================
+
+def main_compression_factory():
+    print("\n" + "--"*80)
+    print("         THE ULTIMATE GENERALIZED COMPRESSION LABORATORY         ")
+    print("--"*80)
+
+    # 1. FILE INGESTION
+    file_name = input("\nEnter file to compress from /data folder (e.g., repetitive.txt): ")
+    # Building the path dynamically (Assuming /data is at the project root)
+    base_dir = os.path.dirname(__file__)
+    file_path = os.path.join(base_dir, "..", "data", file_name)
+
+    if not os.path.exists(file_path):
+        print(f" ERROR: File '{file_path}' not found!")
+        return
+
+    with open(file_path, 'r', encoding='utf-8') as f:
